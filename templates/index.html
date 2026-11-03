@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌐 NetScope - Network Intelligence Suite</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        :root {
+            --bg-primary: #0a0e1a; --bg-secondary: #111827; --bg-card: #1a2234;
+            --bg-card-hover: #1f2942; --bg-input: #0d1321; --border-color: #2a3654;
+            --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-muted: #64748b;
+            --accent-blue: #3b82f6; --accent-cyan: #06b6d4; --accent-green: #10b981;
+            --accent-yellow: #f59e0b; --accent-red: #ef4444; --accent-purple: #8b5cf6;
+            --gradient-1: linear-gradient(135deg, #3b82f6, #06b6d4);
+            --gradient-2: linear-gradient(135deg, #8b5cf6, #ec4899);
+            --gradient-3: linear-gradient(135deg, #10b981, #06b6d4);
+            --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+            --radius: 12px; --radius-sm: 8px; --radius-lg: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.05) 0%, transparent 50%); pointer-events: none; z-index: 0; }
+        .app-container { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+        .sidebar { width: 270px; min-height: 100vh; background: var(--bg-secondary); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid var(--border-color); }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 44px; height: 44px; background: var(--gradient-1); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
+        .logo-text h1 { font-size: 20px; font-weight: 800; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+        .logo-text span { font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+        .nav-section { padding: 16px 12px; flex: 1; overflow-y: auto; }
+        .nav-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; padding: 8px 12px; margin-top: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s ease; color: var(--text-secondary); font-size: 14px; font-weight: 500; margin: 2px 0; position: relative; user-select: none; }
+        .nav-item:hover { background: rgba(59,130,246,0.08); color: var(--text-primary); }
+        .nav-item.active { background: rgba(59,130,246,0.15); color: var(--accent-blue); font-weight: 600; }
+        .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 24px; background: var(--accent-blue); border-radius: 0 3px 3px 0; }
+        .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-muted); text-align: center; }
+        .main-content { flex: 1; margin-left: 270px; min-height: 100vh; }
+        .topbar { padding: 16px 32px; background: rgba(17,24,39,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+        .topbar-title { font-size: 18px; font-weight: 700; }
+        .status-badge { display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--accent-green); }
+        .status-dot { width: 7px; height: 7px; background: var(--accent-green); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); } 50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(16,185,129,0); } }
+        .page-content { padding: 32px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; transition: all 0.3s ease; }
+        .card:hover { border-color: rgba(59,130,246,0.3); box-shadow: var(--shadow-glow); }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .card-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .card-title .icon { font-size: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 28px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-glow); }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .stat-card.blue::after { background: var(--gradient-1); }
+        .stat-card.green::after { background: var(--gradient-3); }
+        .stat-card.purple::after { background: var(--gradient-2); }
+        .stat-card.yellow::after { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+        .stat-card.blue .stat-value { color: var(--accent-blue); }
+        .stat-card.green .stat-value { color: var(--accent-green); }
+        .stat-card.purple .stat-value { color: var(--accent-purple); }
+        .stat-card.yellow .stat-value { color: var(--accent-yellow); }
+        .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .form-row .form-group { flex: 1; min-width: 180px; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 13px; transition: all 0.2s ease; outline: none; }
+        input:focus, select:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+        .btn-primary { background: var(--gradient-1); color: white; box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+        .btn-secondary { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background: var(--bg-card-hover); border-color: var(--accent-blue); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-success { background: var(--gradient-3); color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-lg { padding: 14px 28px; font-size: 15px; }
+        .table-container { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead { background: rgba(59,130,246,0.08); }
+        th { padding: 12px 16px; text-align: left; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 11px; letter-spacing: 0.8px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+        td { padding: 12px 16px; border-bottom: 1px solid rgba(42,54,84,0.4); color: var(--text-primary); }
+        tr:hover td { background: rgba(59,130,246,0.04); }
+        tr:last-child td { border-bottom: none; }
+        .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; gap: 4px; }
+        .badge-green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .badge-red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .badge-yellow { background: rgba(245,158,11,0.15); color: var(--accent-yellow); }
+        .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .badge-purple { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+        .terminal { background: #0a0f1c; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.8; max-height: 500px; overflow-y: auto; color: var(--text-secondary); }
+        .terminal::-webkit-scrollbar { width: 6px; }
+        .terminal::-webkit-scrollbar-track { background: transparent; }
+        .terminal::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        .term-line { padding: 2px 0; }
+        .term-success { color: var(--accent-green); }
+        .term-error { color: var(--accent-red); }
+        .term-warn { color: var(--accent-yellow); }
+        .term-info { color: var(--accent-cyan); }
+        .term-time { color: var(--text-muted); }
+        .progress-bar { width: 100%; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; margin: 12px 0; }
+        .progress-fill { height: 100%; background: var(--gradient-1); border-radius: 3px; transition: width 0.5s ease; position: relative; }
+        .progress-fill::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .chart-container { position: relative; width: 100%; height: 280px; background: rgba(10,14,26,0.5); border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden; }
+        .chart-canvas { width: 100%; height: 100%; }
+        .speed-gauge-container { display: flex; justify-content: center; gap: 60px; padding: 40px 20px; flex-wrap: wrap; }
+        .gauge { text-align: center; }
+        .gauge-circle { width: 200px; height: 200px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .gauge-circle svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+        .gauge-circle circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+        .gauge-bg { stroke: var(--border-color); }
+        .gauge-fill-dl { stroke: var(--accent-cyan); transition: stroke-dashoffset 1s ease; }
+        .gauge-fill-ul { stroke: var(--accent-purple); transition: stroke-dashoffset 1s ease; }
+        .gauge-value { font-size: 36px; font-weight: 800; z-index: 1; }
+        .gauge-unit { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+        .gauge-label { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+        .speed-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 24px; }
+        .speed-detail-item { background: var(--bg-input); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+        .speed-detail-item .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .speed-detail-item .value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .monitor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .monitor-node { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 20px; transition: all 0.3s ease; }
+        .monitor-node:hover { border-color: rgba(59,130,246,0.3); }
+        .monitor-node.status-up { border-left: 3px solid var(--accent-green); }
+        .monitor-node.status-down { border-left: 3px solid var(--accent-red); }
+        .monitor-node.status-warn { border-left: 3px solid var(--accent-yellow); }
+        .node-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .node-name { font-weight: 700; font-size: 14px; }
+        .node-ip { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted); }
+        .node-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .node-stat { text-align: center; padding: 8px; background: var(--bg-input); border-radius: var(--radius-sm); }
+        .node-stat .ns-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+        .node-stat .ns-value { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .mini-chart { height: 50px; margin-top: 12px; background: var(--bg-input); border-radius: var(--radius-sm); overflow: hidden; }
+        .mini-chart canvas { width: 100%; height: 100%; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { padding: 12px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 8px; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+        .toast-info { background: var(--accent-blue); color: white; }
+        .toast-success { background: var(--accent-green); color: white; }
+        .toast-error { background: var(--accent-red); color: white; }
+        .toast-warning { background: var(--accent-yellow); color: #000; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-overlay { display: none; position: absolute; inset: 0; background: rgba(10,14,26,0.7); backdrop-filter: blur(4px); z-index: 10; border-radius: var(--radius-lg); align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+        .loading-overlay.active { display: flex; }
+        .loading-text { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+        .big-spinner { width: 44px; height: 44px; border: 3px solid rgba(59,130,246,0.2); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        .port-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+        .port-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 2px 8px; background: rgba(6,182,212,0.1); color: var(--accent-cyan); border-radius: 4px; border: 1px solid rgba(6,182,212,0.2); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .scan-options { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+        .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+        .checkbox-label input[type="checkbox"] { accent-color: var(--accent-blue); }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 18px; color: var(--text-secondary); margin-bottom: 8px; }
+        .mobile-toggle { display: none; background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .page-content { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .two-col { grid-template-columns: 1fr; }
+            .form-row { flex-direction: column; }
+            .mobile-toggle { display: block; }
+        }
+        /* ===== MODAL ===== */
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(10, 14, 26, 0.82); backdrop-filter: blur(6px); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-backdrop.open { display: flex; }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 100%; max-width: 820px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 65px rgba(0,0,0,0.6); animation: modalIn 0.22s ease-out; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+        .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; line-height: 1; padding: 4px; border-radius: 4px; }
+        .modal-close:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+        .alert-banner { padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 500; }
+        .alert-banner.danger { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5; }
+        .alert-banner.warning { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); color: #fde68a; }
+    </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="app-container">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">🌐</div>
+                <div class="logo-text"><h1>NetScope</h1><span>Network Intelligence</span></div>
+            </div>
+        </div>
+        <nav class="nav-section">
+            <div class="nav-label">Overview</div>
+            <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+            <div class="nav-label">Discovery</div>
+            <div class="nav-item" data-page="scanner"><span class="nav-icon">🔍</span> Network Scanner</div>
+            <div class="nav-item" data-page="portscan"><span class="nav-icon">🚪</span> Port Scanner</div>
+            <div class="nav-label">Diagnostics</div>
+            <div class="nav-item" data-page="ping"><span class="nav-icon">📡</span> Ping Tool</div>
+            <div class="nav-item" data-page="traceroute"><span class="nav-icon">🗺️</span> Traceroute</div>
+            <div class="nav-item" data-page="dns"><span class="nav-icon">🏷️</span> DNS Lookup</div>
+            <div class="nav-item" data-page="whois"><span class="nav-icon">🔎</span> Whois Lookup</div>
+            <div class="nav-item" data-page="subnet"><span class="nav-icon">🧮</span> Subnet Calculator</div>
+            <div class="nav-label">Monitoring</div>
+            <div class="nav-item" data-page="monitor"><span class="nav-icon">💓</span> Node Monitor</div>
+            <div class="nav-item" data-page="speedtest"><span class="nav-icon">⚡</span> Speed Test</div>
+            <div class="nav-label">History</div>
+            <div class="nav-item" data-page="logs"><span class="nav-icon">📋</span> Logs</div>
+        </nav>
+        <div class="sidebar-footer">NetScope v1.0 • Pure Python 🐍</div>
+    </aside>
+    <!-- ===== MAIN ===== -->
+    <main class="main-content">
+        <div class="topbar">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                <span class="topbar-title" id="pageTitle">📊 Dashboard</span>
+            </div>
+            <div class="status-badge"><div class="status-dot"></div><span id="systemInterface">Loading...</span></div>
+        </div>
+        <div class="page-content">
+
+            <!-- ===== DASHBOARD ===== -->
+            <div class="page active" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card blue"><div class="stat-label">Devices Found</div><div class="stat-value" id="statDevices">—</div><div class="stat-sub">from last scan</div></div>
+                    <div class="stat-card green"><div class="stat-label">Nodes Online</div><div class="stat-value" id="statOnline">—</div><div class="stat-sub">monitored nodes</div></div>
+                    <div class="stat-card purple"><div class="stat-label">Open Ports</div><div class="stat-value" id="statPorts">—</div><div class="stat-sub">across all hosts</div></div>
+                    <div class="stat-card yellow"><div class="stat-label">Alerts</div><div class="stat-value" id="statAlerts">0</div><div class="stat-sub">nodes with issues</div></div>
+                </div>
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title"><span class="icon">🖥️</span> Recent Devices</div><button class="btn btn-sm btn-secondary" onclick="navigateTo('scanner')">Scan Now →</button></div>
+                        <div id="recentDevices"><div class="empty-state"><div class="icon">🔍</div><h3>No Scan Results Yet</h3><p>Run a Network Scan to discover devices</p></div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title"><span class="icon">📋</span> Recent Activity</div><button class="btn btn-sm btn-secondary" onclick="navigateTo('logs')">All Logs →</button></div>
+                        <div class="terminal" id="dashLog" style="max-height:300px;"><div class="term-line term-info">Welcome to NetScope Network Intelligence Suite</div><div class="term-line term-info">Ready to scan and monitor your network</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== NETWORK SCANNER ===== -->
+            <div class="page" id="page-scanner">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">🔍</span> Network Scanner</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Target Network / IP Range</label><input type="text" id="scanTarget" placeholder="e.g., 192.168.1.0/24 or 10.0.0.1-50" /></div>
+                        <div class="form-group" style="flex:0 0 auto;"><button class="btn btn-primary btn-lg" id="btnScan" onclick="startNetworkScan()">🔍 Start Scan</button></div>
+                    </div>
+                    <div class="scan-options">
+                        <label class="checkbox-label"><input type="checkbox" id="optPorts" checked> Scan Ports</label>
+                        <label class="checkbox-label"><input type="checkbox" id="optHostname" checked> Resolve Hostname</label>
+                        <label class="checkbox-label"><input type="checkbox" id="optMac" checked> Detect MAC</label>
+                        <label class="checkbox-label"><input type="checkbox" id="optOS"> OS Detection</label>
+                        <label class="checkbox-label"><input type="checkbox" id="optLatency" checked> Measure Latency</label>
+                    </div>
+                    <div class="progress-bar" id="scanProgress" style="display:none;"><div class="progress-fill" id="scanProgressFill" style="width:0%"></div></div>
+                    <div id="scanStatus" style="font-size:13px;color:var(--text-muted);margin-top:8px;"></div>
+                </div>
+                <div class="card" id="scanResultsCard" style="display:none;">
+                    <div class="card-header"><div class="card-title"><span class="icon">📋</span> Scan Results</div><div class="action-buttons"><button class="btn btn-sm btn-secondary" onclick="exportResults()">📥 Export CSV</button></div></div>
+                    <div class="table-container">
+                        <table><thead><tr><th>#</th><th>Status</th><th>IP Address</th><th>Hostname</th><th>MAC Address</th><th>Vendor</th><th>Latency</th><th>Open Ports</th><th>OS</th><th>Actions</th></tr></thead><tbody id="scanResultsBody"></tbody></table>
+                    </div>
+                    <div style="margin-top:12px;font-size:13px;color:var(--text-muted);"><span id="scanSummary"></span></div>
+                </div>
+            </div>
+
+            <!-- ===== PORT SCANNER ===== -->
+            <div class="page" id="page-portscan">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">🚪</span> Port Scanner</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Target Host</label><input type="text" id="portTarget" placeholder="e.g., 192.168.1.1 or example.com" /></div>
+                        <div class="form-group"><label class="form-label">Port Range</label><input type="text" id="portRange" placeholder="e.g., 1-1024 or 80,443,8080" value="1-1024" /></div>
+                        <div class="form-group" style="flex:0 0 auto;"><button class="btn btn-primary" onclick="startPortScan()">🚪 Scan Ports</button></div>
+                    </div>
+                    <div class="progress-bar" id="portProgress" style="display:none;"><div class="progress-fill" id="portProgressFill" style="width:0%"></div></div>
+                    <div id="portStatus" style="font-size:13px;color:var(--text-muted);margin-top:8px;"></div>
+                </div>
+                <div class="card" id="portResultsCard" style="display:none;">
+                    <div class="card-header"><div class="card-title"><span class="icon">📋</span> Port Scan Results</div></div>
+                    <div class="table-container"><table><thead><tr><th>Port</th><th>State</th><th>Service</th><th>Protocol</th><th>Description</th></tr></thead><tbody id="portResultsBody"></tbody></table></div>
+                </div>
+            </div>
+
+            <!-- ===== PING ===== -->
+            <div class="page" id="page-ping">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">📡</span> Interactive Ping</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Target Host</label><input type="text" id="pingTarget" placeholder="e.g., 8.8.8.8 or google.com" /></div>
+                        <div class="form-group"><label class="form-label">Count</label><input type="number" id="pingCount" value="20" min="1" max="200" /></div>
+                        <div class="form-group" style="flex:0 0 auto;">
+                            <button class="btn btn-primary" id="btnPing" onclick="startPing()">📡 Start Ping</button>
+                            <button class="btn btn-danger" id="btnPingStop" onclick="stopPing()" style="display:none;">⏹ Stop</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title"><span class="icon">📈</span> Latency Graph</div></div>
+                        <div class="chart-container"><canvas id="pingChart" class="chart-canvas"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title"><span class="icon">📊</span> Statistics</div></div>
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="stat-card blue"><div class="stat-label">Avg Latency</div><div class="stat-value" id="pingAvg" style="font-size:24px;">—</div></div>
+                            <div class="stat-card green"><div class="stat-label">Min</div><div class="stat-value" id="pingMin" style="font-size:24px;">—</div></div>
+                            <div class="stat-card yellow"><div class="stat-label">Max</div><div class="stat-value" id="pingMax" style="font-size:24px;">—</div></div>
+                            <div class="stat-card purple"><div class="stat-label">Packet Loss</div><div class="stat-value" id="pingLoss" style="font-size:24px;">—</div></div>
+                        </div>
+                        <div class="terminal" id="pingLog" style="max-height:200px;margin-top:16px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TRACEROUTE ===== -->
+            <div class="page" id="page-traceroute">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">🗺️</span> Traceroute</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Target Host</label><input type="text" id="traceTarget" placeholder="e.g., 8.8.8.8 or google.com" /></div>
+                        <div class="form-group" style="flex:0 0 auto;"><button class="btn btn-primary" id="btnTrace" onclick="startTraceroute()">🗺️ Trace Route</button></div>
+                    </div>
+                </div>
+                <div class="card" id="traceResultsCard" style="display:none;">
+                    <div class="card-header"><div class="card-title"><span class="icon">📋</span> Route to <span id="traceHost"></span></div></div>
+                    <div class="table-container"><table><thead><tr><th>Hop</th><th>IP Address</th><th>Hostname</th><th>RTT 1</th><th>RTT 2</th><th>RTT 3</th></tr></thead><tbody id="traceResultsBody"></tbody></table></div>
+                </div>
+            </div>
+
+            <!-- ===== DNS ===== -->
+            <div class="page" id="page-dns">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">🏷️</span> DNS Lookup</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Domain / IP</label><input type="text" id="dnsTarget" placeholder="e.g., google.com or 8.8.8.8" /></div>
+                        <div class="form-group" style="flex:0 0 auto;"><button class="btn btn-primary" onclick="dnsLookup()">🏷️ Lookup</button></div>
+                    </div>
+                </div>
+                <div class="card" id="dnsResultsCard" style="display:none;">
+                    <div class="card-header"><div class="card-title"><span class="icon">📋</span> DNS Results</div></div>
+                    <div id="dnsResults"></div>
+                </div>
+            </div>
+
+            <!-- ===== WHOIS ===== -->
+            <div class="page" id="page-whois">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">🔎</span> Whois Lookup</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Domain / IP</label><input type="text" id="whoisTarget" placeholder="e.g., google.com or 8.8.8.8" /></div>
+                        <div class="form-group" style="flex:0 0 auto;"><button class="btn btn-primary" id="btnWhois" onclick="whoisLookup()">🔎 Lookup</button></div>
+                    </div>
+                </div>
+                <div class="card" id="whoisResultsCard" style="display:none;">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">📋</span> Whois Results</div>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-secondary" id="btnWhoisToggle" onclick="toggleWhoisRaw()">📄 Show Raw</button>
+                        </div>
+                    </div>
+                    <div id="whoisParsed"></div>
+                    <div class="terminal" id="whoisRaw" style="display:none;max-height:500px;white-space:pre-wrap;"></div>
+                </div>
+            </div>
+
+            <!-- ===== SUBNET CALC ===== -->
+            <div class="page" id="page-subnet">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">🧮</span> Subnet Calculator</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">CIDR Notation</label><input type="text" id="subnetCIDR" placeholder="e.g., 192.168.1.0/24 or 10.0.0.0/16" /></div>
+                        <div class="form-group" style="flex:0 0 auto;"><button class="btn btn-primary" onclick="calcSubnet()">🧮 Calculate</button></div>
+                    </div>
+                </div>
+                <div class="card" id="subnetResultsCard" style="display:none;">
+                    <div class="card-header"><div class="card-title"><span class="icon">📋</span> Subnet Details</div></div>
+                    <div id="subnetResults"></div>
+                </div>
+            </div>
+
+            <!-- ===== MONITOR ===== -->
+            <div class="page" id="page-monitor">
+                <div id="monitorAlertBanner" style="display:none;"></div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">💓</span> Node Monitor</div>
+                        <div class="action-buttons">
+                            <select id="monitorIntervalSelect" style="width:auto;padding:6px 12px;font-size:12px;" onchange="changeMonitorInterval()">
+                                <option value="3000">Interval: 3s</option>
+                                <option value="5000" selected>Interval: 5s</option>
+                                <option value="10000">Interval: 10s</option>
+                                <option value="30000">Interval: 30s</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm" onclick="showAddMonitor()">➕ Add Node</button>
+                            <button class="btn btn-success btn-sm" id="btnMonitorToggle" onclick="toggleMonitoring()">▶ Start Monitoring</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+                        <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Presets:</span>
+                        <button class="btn btn-sm btn-secondary" onclick="addPresetGateway()">⚡ Default Gateway</button>
+                        <button class="btn btn-sm btn-secondary" onclick="addMonitorNodeDirect('Cloudflare DNS', '1.1.1.1')">⚡ Cloudflare (1.1.1.1)</button>
+                        <button class="btn btn-sm btn-secondary" onclick="addMonitorNodeDirect('Google DNS', '8.8.8.8')">⚡ Google (8.8.8.8)</button>
+                    </div>
+                    <div id="addMonitorForm" style="display:none;margin-bottom:20px;">
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Node Name</label><input type="text" id="monitorName" placeholder="e.g., Gateway Router" /></div>
+                            <div class="form-group"><label class="form-label">IP Address / Hostname</label><input type="text" id="monitorIP" placeholder="e.g., 192.168.1.1" /></div>
+                            <div class="form-group" style="flex:0 0 auto;">
+                                <button class="btn btn-primary" onclick="addMonitorNode()">Add</button>
+                                <button class="btn btn-secondary" onclick="document.getElementById('addMonitorForm').style.display='none'">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="monitor-grid" id="monitorGrid">
+                    <div class="empty-state" style="grid-column:1/-1;"><div class="icon">💓</div><h3>No Monitored Nodes</h3><p>Add nodes to start monitoring latency & packet loss</p></div>
+                </div>
+            </div>
+
+            <!-- ===== SPEED TEST ===== -->
+            <div class="page" id="page-speedtest">
+                <div class="card" style="position:relative;">
+                    <div class="loading-overlay" id="speedLoading"><div class="big-spinner"></div><div class="loading-text" id="speedLoadingText">Running speed test...</div></div>
+                    <div class="card-header"><div class="card-title"><span class="icon">⚡</span> Internet Speed Test</div><button class="btn btn-primary" id="btnSpeed" onclick="startSpeedTest()">⚡ Run Speed Test</button></div>
+                    <div class="speed-gauge-container">
+                        <div class="gauge">
+                            <div class="gauge-circle">
+                                <svg viewBox="0 0 200 200"><circle class="gauge-bg" cx="100" cy="100" r="88" /><circle class="gauge-fill-dl" id="gaugeDl" cx="100" cy="100" r="88" stroke-dasharray="553" stroke-dashoffset="553" /></svg>
+                                <div><div class="gauge-value" id="speedDl" style="color:var(--accent-cyan);">—</div><div class="gauge-unit">Mbps</div></div>
+                            </div>
+                            <div class="gauge-label">⬇ Download</div>
+                        </div>
+                        <div class="gauge">
+                            <div class="gauge-circle">
+                                <svg viewBox="0 0 200 200"><circle class="gauge-bg" cx="100" cy="100" r="88" /><circle class="gauge-fill-ul" id="gaugeUl" cx="100" cy="100" r="88" stroke-dasharray="553" stroke-dashoffset="553" /></svg>
+                                <div><div class="gauge-value" id="speedUl" style="color:var(--accent-purple);">—</div><div class="gauge-unit">Mbps</div></div>
+                            </div>
+                            <div class="gauge-label">⬆ Upload</div>
+                        </div>
+                    </div>
+                    <div class="speed-details" id="speedDetails" style="display:none;">
+                        <div class="speed-detail-item"><div class="label">Ping</div><div class="value" id="speedPing" style="color:var(--accent-green);">—</div></div>
+                        <div class="speed-detail-item"><div class="label">Jitter</div><div class="value" id="speedJitter" style="color:var(--accent-yellow);">—</div></div>
+                        <div class="speed-detail-item"><div class="label">Server</div><div class="value" id="speedServer" style="color:var(--text-secondary);font-size:14px;">—</div></div>
+                        <div class="speed-detail-item"><div class="label">IP Address</div><div class="value" id="speedIP" style="color:var(--text-secondary);font-size:14px;">—</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== LOGS ===== -->
+            <div class="page" id="page-logs">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">📋</span> Activity Logs</div>
+                        <div class="action-buttons">
+                            <select id="logFilter" style="width:auto;" onchange="filterLogs()">
+                                <option value="all">All Events</option><option value="scan">Scans</option><option value="ping">Pings</option><option value="monitor">Monitor</option><option value="speed">Speed Tests</option><option value="error">Errors</option>
+                            </select>
+                            <button class="btn btn-sm btn-danger" onclick="clearLogs()">🗑 Clear</button>
+                            <button class="btn btn-sm btn-secondary" onclick="exportLogs()">📥 Export</button>
+                        </div>
+                    </div>
+                    <div class="terminal" id="logsTerminal" style="max-height:600px;"><div class="term-line term-info">Log started — all activity will be recorded here</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><span class="icon">🔍</span> Node Log Viewer</div></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">IP / Hostname</label><input type="text" id="nodeLogTarget" placeholder="Enter IP or hostname to view its logs" /></div>
+                        <div class="form-group" style="flex:0 0 auto;"><button class="btn btn-primary" onclick="viewNodeLogs()">🔍 View Logs</button></div>
+                    </div>
+                    <div class="terminal" id="nodeLogTerminal" style="max-height:400px;margin-top:16px;"><div class="term-line term-info">Enter an IP or hostname to see its activity history</div></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+// ===== STATE =====
+let scanResults = [], monitorNodes = [], monitorInterval = null, isMonitoring = false;
+let pingAbort = null, allLogs = [], pingChartData = [];
+
+// ===== NAVIGATION =====
+function navigateTo(page) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const nav = document.querySelector(`.nav-item[data-page="${page}"]`);
+    const pg = document.getElementById(`page-${page}`);
+    if (nav) nav.classList.add('active');
+    if (pg) pg.classList.add('active');
+    const t = {dashboard:'📊 Dashboard',scanner:'🔍 Network Scanner',portscan:'🚪 Port Scanner',ping:'📡 Ping Tool',traceroute:'🗺️ Traceroute',dns:'🏷️ DNS Lookup',whois:'🔎 Whois Lookup',subnet:'🧮 Subnet Calculator',monitor:'💓 Node Monitor',speedtest:'⚡ Speed Test',logs:'📋 Logs'};
+    document.getElementById('pageTitle').textContent = t[page] || page;
+    document.getElementById('sidebar').classList.remove('open');
+}
+document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => navigateTo(item.dataset.page)));
+
+// ===== TOAST =====
+function toast(msg, type='info') {
+    const c = document.getElementById('toastContainer'), el = document.createElement('div');
+    el.className = `toast toast-${type}`; el.innerHTML = msg; c.appendChild(el);
+    setTimeout(() => { el.style.opacity='0'; setTimeout(() => el.remove(), 300); }, 4000);
+}
+
+// ===== LOGGING =====
+function addLog(msg, type='info', category='general', target='') {
+    const now = new Date().toLocaleTimeString();
+    allLogs.push({time:now, msg, type, category, target, timestamp:Date.now()});
+    const html = `<div class="term-line"><span class="term-time">[${now}]</span> <span class="term-${type}">${msg}</span></div>`;
+    const el = document.getElementById('logsTerminal');
+    el.insertAdjacentHTML('beforeend', html); el.scrollTop = el.scrollHeight;
+    const dl = document.getElementById('dashLog');
+    dl.insertAdjacentHTML('beforeend', html); dl.scrollTop = dl.scrollHeight;
+}
+function filterLogs() {
+    const f = document.getElementById('logFilter').value, el = document.getElementById('logsTerminal');
+    el.innerHTML = '';
+    (f==='all' ? allLogs : allLogs.filter(l => l.category===f || (f==='error' && l.type==='error'))).forEach(e => {
+        el.insertAdjacentHTML('beforeend', `<div class="term-line"><span class="term-time">[${e.time}]</span> <span class="term-${e.type}">${e.msg}</span></div>`);
+    }); el.scrollTop = el.scrollHeight;
+}
+function clearLogs() { allLogs=[]; document.getElementById('logsTerminal').innerHTML='<div class="term-line term-info">Logs cleared</div>'; toast('Logs cleared','success'); }
+function exportLogs() { downloadFile('netscope_logs.txt', allLogs.map(l=>`[${l.time}] [${l.category}] ${l.msg}`).join('\n')); toast('📥 Logs exported','success'); }
+function viewNodeLogs() {
+    const t = document.getElementById('nodeLogTarget').value.trim();
+    if (!t) { toast('Enter an IP or hostname','warning'); return; }
+    const el = document.getElementById('nodeLogTerminal');
+    const f = allLogs.filter(l => l.target && l.target.includes(t));
+    el.innerHTML = f.length===0 ? `<div class="term-line term-warn">No logs found for ${t}</div>` : '';
+    f.forEach(e => el.insertAdjacentHTML('beforeend', `<div class="term-line"><span class="term-time">[${e.time}]</span> <span class="term-${e.type}">${e.msg}</span></div>`));
+    el.scrollTop = el.scrollHeight;
+}
+
+// ===== API =====
+async function apiCall(endpoint, params={}) {
+    const url = new URL(endpoint, window.location.origin);
+    Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+    return (await fetch(url)).json();
+}
+
+// ===== NETWORK SCANNER =====
+async function startNetworkScan() {
+    const target = document.getElementById('scanTarget').value.trim();
+    if (!target) { toast('Enter a target network','warning'); return; }
+    const btn = document.getElementById('btnScan');
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Scanning...';
+    document.getElementById('scanProgress').style.display='block';
+    document.getElementById('scanProgressFill').style.width='10%';
+    document.getElementById('scanStatus').textContent='Discovering hosts...';
+    addLog(`Starting network scan on ${target}`,'info','scan',target);
+    let progress=10;
+    const pi = setInterval(()=>{ progress=Math.min(progress+Math.random()*5,90); document.getElementById('scanProgressFill').style.width=progress+'%'; },500);
+    try {
+        const data = await apiCall('/api/scan', {target, ports:document.getElementById('optPorts').checked?'1':'0', hostname:document.getElementById('optHostname').checked?'1':'0', mac:document.getElementById('optMac').checked?'1':'0', os:document.getElementById('optOS').checked?'1':'0', latency:document.getElementById('optLatency').checked?'1':'0'});
+        clearInterval(pi); document.getElementById('scanProgressFill').style.width='100%';
+        if (data.error) { addLog(`Scan error: ${data.error}`,'error','scan',target); toast('Scan failed: '+data.error,'error'); }
+        else { scanResults=data.results||[]; renderScanResults(); updateDashboard(); addLog(`Scan complete: Found ${scanResults.length} device(s) on ${target}`,'success','scan',target); toast(`Found ${scanResults.length} device(s)!`,'success'); }
+    } catch(err) { clearInterval(pi); addLog(`Scan error: ${err.message}`,'error','scan',target); toast('Error: '+err.message,'error'); }
+    setTimeout(()=>{ document.getElementById('scanProgress').style.display='none'; document.getElementById('scanStatus').textContent=''; },1000);
+    btn.disabled=false; btn.innerHTML='🔍 Start Scan';
+}
+function renderScanResults() {
+    document.getElementById('scanResultsCard').style.display='block';
+    document.getElementById('scanResultsBody').innerHTML = scanResults.map((r,i) => `<tr>
+        <td>${i+1}</td>
+        <td><span class="badge ${r.status==='up'?'badge-green':'badge-red'}">● ${r.status}</span></td>
+        <td class="mono">${r.ip}</td>
+        <td>${r.hostname||'<span style="color:var(--text-muted)">—</span>'}</td>
+        <td class="mono">${r.mac||'<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>${r.vendor||'<span style="color:var(--text-muted)">—</span>'}</td>
+        <td class="mono">${r.latency?r.latency+' ms':'<span style="color:var(--text-muted)">—</span>'}</td>
+        <td><div class="port-tags">${(r.ports||[]).map(p=>`<span class="port-tag">${p}</span>`).join('')||'<span style="color:var(--text-muted)">—</span>'}</div></td>
+        <td>${r.os||'<span style="color:var(--text-muted)">—</span>'}</td>
+        <td><div class="action-buttons"><button class="btn btn-sm btn-secondary" onclick="pingHost('${r.ip}')" title="Ping">📡</button><button class="btn btn-sm btn-secondary" onclick="addToMonitor('${r.ip}','${(r.hostname||r.ip).replace(/'/g,"\\'")}')" title="Monitor">💓</button></div></td>
+    </tr>`).join('');
+    const tp = scanResults.reduce((s,r)=>s+(r.ports?r.ports.length:0),0);
+    document.getElementById('scanSummary').textContent = `${scanResults.length} hosts found • ${tp} open ports detected • ${new Date().toLocaleString()}`;
+}
+function exportResults() {
+    if (!scanResults.length) { toast('No results','warning'); return; }
+    let csv='IP,Hostname,MAC,Vendor,Latency(ms),Open Ports,OS,Status\n';
+    scanResults.forEach(r => csv+=`${r.ip},"${r.hostname||''}","${r.mac||''}","${r.vendor||''}",${r.latency||''},"${(r.ports||[]).join(';')}","${r.os||''}",${r.status}\n`);
+    downloadFile('network_scan.csv',csv); toast('📥 Exported CSV','success');
+}
+
+// ===== PORT SCANNER =====
+async function startPortScan() {
+    const target=document.getElementById('portTarget').value.trim(), range=document.getElementById('portRange').value.trim();
+    if (!target) { toast('Enter a target','warning'); return; }
+    document.getElementById('portProgress').style.display='block'; document.getElementById('portProgressFill').style.width='10%';
+    document.getElementById('portStatus').textContent='Scanning ports...';
+    addLog(`Port scan on ${target} (${range})`,'info','scan',target);
+    let progress=10;
+    const pi=setInterval(()=>{progress=Math.min(progress+Math.random()*3,90);document.getElementById('portProgressFill').style.width=progress+'%';},300);
+    try {
+        const data=await apiCall('/api/portscan',{target,range}); clearInterval(pi); document.getElementById('portProgressFill').style.width='100%';
+        if (data.error) { addLog(`Port scan error: ${data.error}`,'error','scan',target); toast('Failed','error'); }
+        else {
+            const results=data.results||[];
+            document.getElementById('portResultsCard').style.display='block';
+            document.getElementById('portResultsBody').innerHTML = results.map(p=>`<tr><td class="mono" style="font-weight:600;">${p.port}</td><td><span class="badge badge-green">● ${p.state}</span></td><td style="font-weight:600;">${p.service}</td><td>TCP</td><td style="color:var(--text-secondary);">${p.description||''}</td></tr>`).join('');
+            addLog(`Port scan: ${results.length} open port(s) on ${target}`,'success','scan',target); toast(`${results.length} open port(s)`,'success');
+        }
+    } catch(err) { clearInterval(pi); toast('Error: '+err.message,'error'); }
+    setTimeout(()=>{document.getElementById('portProgress').style.display='none';document.getElementById('portStatus').textContent='';},1000);
+}
+
+// ===== PING =====
+async function startPing() {
+    const target=document.getElementById('pingTarget').value.trim(), count=parseInt(document.getElementById('pingCount').value)||20;
+    if (!target) { toast('Enter a target','warning'); return; }
+    document.getElementById('btnPing').style.display='none'; document.getElementById('btnPingStop').style.display='inline-flex';
+    pingChartData=[]; document.getElementById('pingLog').innerHTML='';
+    addLog(`Ping to ${target} (${count} packets)`,'info','ping',target);
+    const controller=new AbortController(); pingAbort=controller;
+    try {
+        const data=await (await fetch(`/api/ping?target=${encodeURIComponent(target)}&count=${count}`,{signal:controller.signal})).json();
+        if (data.error) { addLog(`Ping error: ${data.error}`,'error','ping',target); toast('Ping failed','error'); }
+        else {
+            const results=data.results||[]; let sent=0,recv=0,total=0,mn=Infinity,mx=0;
+            const logEl=document.getElementById('pingLog');
+            results.forEach((r,i) => { sent++;
+                if (r.ms!==null) { recv++; total+=r.ms; mn=Math.min(mn,r.ms); mx=Math.max(mx,r.ms); pingChartData.push(r.ms);
+                    logEl.insertAdjacentHTML('beforeend',`<div class="term-line term-success">Reply from ${target}: time=${r.ms.toFixed(1)}ms seq=${i+1}</div>`);
+                } else { pingChartData.push(null); logEl.insertAdjacentHTML('beforeend',`<div class="term-line term-error">Request timeout seq=${i+1}</div>`); }
+            }); logEl.scrollTop=logEl.scrollHeight;
+            const loss=sent>0?((sent-recv)/sent*100).toFixed(1):0, avg=recv>0?(total/recv).toFixed(1):'—';
+            document.getElementById('pingAvg').textContent=avg!=='—'?avg+' ms':'—';
+            document.getElementById('pingMin').textContent=mn!==Infinity?mn.toFixed(1)+' ms':'—';
+            document.getElementById('pingMax').textContent=mx>0?mx.toFixed(1)+' ms':'—';
+            document.getElementById('pingLoss').textContent=loss+'%';
+            drawPingChart();
+            addLog(`Ping ${target}: avg=${avg}ms loss=${loss}% sent=${sent} recv=${recv}`,loss>10?'warn':'success','ping',target);
+        }
+    } catch(err) { if(err.name!=='AbortError') { addLog(`Ping error: ${err.message}`,'error','ping',target); toast('Error','error'); } }
+    document.getElementById('btnPing').style.display='inline-flex'; document.getElementById('btnPingStop').style.display='none';
+}
+function stopPing() { if(pingAbort) pingAbort.abort(); document.getElementById('btnPing').style.display='inline-flex'; document.getElementById('btnPingStop').style.display='none'; toast('Ping stopped','info'); }
+function pingHost(ip) { document.getElementById('pingTarget').value=ip; navigateTo('ping'); startPing(); }
+
+// ===== PING CHART =====
+function drawPingChart() {
+    const canvas=document.getElementById('pingChart'), ctx=canvas.getContext('2d');
+    const rect=canvas.parentElement.getBoundingClientRect(); canvas.width=rect.width; canvas.height=rect.height;
+    const data=pingChartData.filter(d=>d!==null); if(data.length<2) return;
+    const pad={top:30,right:20,bottom:40,left:60}, w=canvas.width-pad.left-pad.right, h=canvas.height-pad.top-pad.bottom;
+    const maxVal=Math.max(...data)*1.2||100; ctx.clearRect(0,0,canvas.width,canvas.height);
+    // Grid
+    ctx.strokeStyle='rgba(42,54,84,0.4)'; ctx.lineWidth=1;
+    for(let i=0;i<=4;i++) { const y=pad.top+(h/4)*i; ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+w,y); ctx.stroke();
+        ctx.fillStyle='#64748b'; ctx.font='11px JetBrains Mono'; ctx.textAlign='right'; ctx.fillText((maxVal-(maxVal/4)*i).toFixed(1)+'ms',pad.left-8,y+4); }
+    // Fill
+    const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+h); grad.addColorStop(0,'rgba(6,182,212,0.3)'); grad.addColorStop(1,'rgba(6,182,212,0)');
+    ctx.beginPath(); ctx.moveTo(pad.left,pad.top+h);
+    const all=pingChartData;
+    all.forEach((v,i)=>{ if(v===null)return; ctx.lineTo(pad.left+(w/(all.length-1))*i, pad.top+h-(v/maxVal)*h); });
+    ctx.lineTo(pad.left+(w/(all.length-1))*(all.length-1),pad.top+h); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+    // Line
+    ctx.beginPath(); let first=true;
+    all.forEach((v,i)=>{ if(v===null)return; const x=pad.left+(w/(all.length-1))*i, y=pad.top+h-(v/maxVal)*h; if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y); });
+    ctx.strokeStyle='#06b6d4'; ctx.lineWidth=2; ctx.stroke();
+    // Points
+    all.forEach((v,i)=>{ const x=pad.left+(w/(all.length-1))*i;
+        if(v===null){ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(x,pad.top+h,4,0,Math.PI*2);ctx.fill();}
+        else{const y=pad.top+h-(v/maxVal)*h;ctx.fillStyle='#06b6d4';ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();}
+    });
+    ctx.fillStyle='#64748b';ctx.font='11px Inter';ctx.textAlign='center';ctx.fillText('Packet Sequence',pad.left+w/2,canvas.height-8);
+    ctx.save();ctx.translate(14,pad.top+h/2);ctx.rotate(-Math.PI/2);ctx.fillText('Latency (ms)',0,0);ctx.restore();
+}
+
+// ===== TRACEROUTE =====
+async function startTraceroute() {
+    const target=document.getElementById('traceTarget').value.trim();
+    if(!target){toast('Enter a target','warning');return;}
+    const btn=document.getElementById('btnTrace'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Tracing...';
+    addLog(`Traceroute to ${target}`,'info','general',target);
+    try {
+        const data=await apiCall('/api/traceroute',{target});
+        if(data.error){addLog(`Traceroute error: ${data.error}`,'error','general',target);toast('Failed','error');}
+        else{document.getElementById('traceResultsCard').style.display='block';document.getElementById('traceHost').textContent=target;
+            document.getElementById('traceResultsBody').innerHTML=(data.results||[]).map(h=>`<tr><td style="font-weight:700;">${h.hop}</td><td class="mono">${h.ip||'*'}</td><td>${h.hostname||'—'}</td><td class="mono">${h.rtt1||'*'}</td><td class="mono">${h.rtt2||'*'}</td><td class="mono">${h.rtt3||'*'}</td></tr>`).join('');
+            addLog(`Traceroute to ${target}: ${data.results.length} hops`,'success','general',target);}
+    } catch(err){toast('Error','error');}
+    btn.disabled=false; btn.innerHTML='🗺️ Trace Route';
+}
+
+// ===== DNS =====
+async function dnsLookup() {
+    const target=document.getElementById('dnsTarget').value.trim();
+    if(!target){toast('Enter a domain/IP','warning');return;}
+    addLog(`DNS lookup: ${target}`,'info','general',target);
+    try {
+        const data=await apiCall('/api/dns',{target}); document.getElementById('dnsResultsCard').style.display='block';
+        const el=document.getElementById('dnsResults');
+        if(data.error) el.innerHTML=`<div class="term-line term-error">${data.error}</div>`;
+        else { let h='<div class="table-container"><table><thead><tr><th>Type</th><th>Value</th></tr></thead><tbody>';
+            (data.results||[]).forEach(r=>h+=`<tr><td><span class="badge badge-blue">${r.type}</span></td><td class="mono">${r.value}</td></tr>`);
+            h+='</tbody></table></div>'; el.innerHTML=h; addLog(`DNS: ${data.results.length} record(s) for ${target}`,'success','general',target); }
+    } catch(err){toast('Error','error');}
+}
+
+// ===== MONITOR =====
+let monitorIntervalTime = 5000;
+let currentModalNode = null;
+let systemGateway = null;
+
+function changeMonitorInterval() {
+    monitorIntervalTime = parseInt(document.getElementById('monitorIntervalSelect').value) || 5000;
+    if (isMonitoring) {
+        clearInterval(monitorInterval);
+        monitorInterval = setInterval(checkAllNodes, monitorIntervalTime);
+    }
+}
+
+function showAddMonitor(){ document.getElementById('addMonitorForm').style.display='block'; }
+
+function addMonitorNodeDirect(name, ip) {
+    if (!ip) return;
+    if (monitorNodes.find(n => n.ip === ip)) { toast('Node already monitored', 'warning'); return; }
+    monitorNodes.push({
+        name: name || ip,
+        ip: ip,
+        status: 'unknown',
+        latency: [],
+        loss: 0,
+        lastCheck: null,
+        logs: [],
+        minLatency: null,
+        maxLatency: null
+    });
+    renderMonitorGrid();
+    addLog(`Added monitor: ${name} (${ip})`, 'success', 'monitor', ip);
+    toast(`Added ${name} to monitor`, 'success');
+}
+
+function addPresetGateway() {
+    if (!systemGateway) { toast('Gateway not detected yet', 'warning'); return; }
+    addMonitorNodeDirect('Gateway Router', systemGateway);
+}
+
+function addMonitorNode(){
+    const name = document.getElementById('monitorName').value.trim();
+    const ip = document.getElementById('monitorIP').value.trim();
+    if (!ip) { toast('Enter an IP', 'warning'); return; }
+    addMonitorNodeDirect(name || ip, ip);
+    document.getElementById('addMonitorForm').style.display = 'none';
+    document.getElementById('monitorName').value = '';
+    document.getElementById('monitorIP').value = '';
+}
+
+function addToMonitor(ip, name){
+    if (monitorNodes.find(n => n.ip === ip)) {
+        toast('Already monitored', 'warning');
+        navigateTo('monitor');
+        return;
+    }
+    addMonitorNodeDirect(name || ip, ip);
+    navigateTo('monitor');
+}
+
+function removeMonitorNode(ip){
+    monitorNodes = monitorNodes.filter(n => n.ip !== ip);
+    if (currentModalNode && currentModalNode.ip === ip) closeNodeModal();
+    renderMonitorGrid();
+    updateMonitorAlerts();
+    addLog(`Removed monitor: ${ip}`, 'info', 'monitor', ip);
+}
+
+function updateMonitorAlerts() {
+    const banner = document.getElementById('monitorAlertBanner');
+    if (!banner) return;
+    const downNodes = monitorNodes.filter(n => n.status === 'down');
+    const warnNodes = monitorNodes.filter(n => n.status === 'warn');
+    if (downNodes.length > 0) {
+        banner.className = 'alert-banner danger';
+        banner.innerHTML = `<span>🚨 <strong>ALERT:</strong> ${downNodes.length} node(s) DOWN (${downNodes.map(n=>n.name).join(', ')})</span><button class="btn btn-sm btn-secondary" onclick="checkAllNodes()">Check Now</button>`;
+        banner.style.display = 'flex';
+    } else if (warnNodes.length > 0) {
+        banner.className = 'alert-banner warning';
+        banner.innerHTML = `<span>⚠️ <strong>WARNING:</strong> ${warnNodes.length} node(s) experiencing high latency or packet loss (${warnNodes.map(n=>n.name).join(', ')})</span><button class="btn btn-sm btn-secondary" onclick="checkAllNodes()">Check Now</button>`;
+        banner.style.display = 'flex';
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+function renderMonitorGrid(){
+    const grid = document.getElementById('monitorGrid');
+    if(!monitorNodes.length){
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="icon">💓</div><h3>No Monitored Nodes</h3><p>Add nodes to start monitoring latency & packet loss</p></div>';
+        updateMonitorAlerts();
+        return;
+    }
+    grid.innerHTML = monitorNodes.map(n => {
+        const sc = n.status === 'up' ? 'status-up' : n.status === 'down' ? 'status-down' : n.status === 'warn' ? 'status-warn' : '';
+        const bc = n.status === 'up' ? 'badge-green' : n.status === 'down' ? 'badge-red' : n.status === 'warn' ? 'badge-yellow' : 'badge-blue';
+        const avg = n.latency.length > 0 ? (n.latency.reduce((a,b)=>a+b,0)/n.latency.length).toFixed(1) : '—';
+        const last = n.latency.length > 0 ? n.latency[n.latency.length-1].toFixed(1) : '—';
+        return `<div class="monitor-node ${sc}">
+            <div class="node-header">
+                <div>
+                    <div class="node-name">${n.name}</div>
+                    <div class="node-ip">${n.ip}</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <span class="badge ${bc}">● ${n.status || 'unknown'}</span>
+                    <button class="btn btn-sm btn-primary" onclick="openNodeModal('${n.ip}')" title="View Node Logs & Details">📋 Log & Details</button>
+                    <button class="btn btn-sm btn-secondary" onclick="pingHost('${n.ip}')" title="Interactive Ping">📡</button>
+                    <button class="btn btn-sm btn-danger" onclick="removeMonitorNode('${n.ip}')" title="Remove Node">✕</button>
+                </div>
+            </div>
+            <div class="node-stats">
+                <div class="node-stat"><div class="ns-label">Latency</div><div class="ns-value" style="color:var(--accent-cyan);">${last}<small>ms</small></div></div>
+                <div class="node-stat"><div class="ns-label">Avg</div><div class="ns-value" style="color:var(--accent-blue);">${avg}<small>ms</small></div></div>
+                <div class="node-stat"><div class="ns-label">Loss</div><div class="ns-value" style="color:${n.loss>10?'var(--accent-red)':'var(--accent-green)'};">${n.loss.toFixed(1)}<small>%</small></div></div>
+            </div>
+            <div class="mini-chart"><canvas id="mc-${n.ip.replace(/\./g,'-')}" style="width:100%;height:100%;"></canvas></div>
+        </div>`;
+    }).join('');
+    monitorNodes.forEach(n => drawMiniChart(n));
+    updateMonitorAlerts();
+}
+
+function drawMiniChart(node){
+    const c = document.getElementById(`mc-${node.ip.replace(/\./g,'-')}`);
+    if(!c || node.latency.length < 2) return;
+    const ctx = c.getContext('2d'), rect = c.parentElement.getBoundingClientRect();
+    c.width = rect.width; c.height = rect.height;
+    const data = node.latency.slice(-30);
+    const max = Math.max(...data) * 1.3 || 100, w = c.width, h = c.height;
+    ctx.clearRect(0,0,w,h);
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, node.status==='down' ? 'rgba(239,68,68,0.3)' : 'rgba(6,182,212,0.2)');
+    grad.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.moveTo(0,h);
+    data.forEach((v,i) => ctx.lineTo((w/(data.length-1))*i, h-(v/max)*h));
+    ctx.lineTo(w,h); ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath();
+    data.forEach((v,i) => {
+        const x = (w/(data.length-1))*i, y = h-(v/max)*h;
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = node.status==='down' ? '#ef4444' : '#06b6d4';
+    ctx.lineWidth = 1.5; ctx.stroke();
+}
+
+async function toggleMonitoring(){
+    if (isMonitoring) {
+        clearInterval(monitorInterval);
+        isMonitoring = false;
+        document.getElementById('btnMonitorToggle').innerHTML = '▶ Start Monitoring';
+        document.getElementById('btnMonitorToggle').className = 'btn btn-success btn-sm';
+        addLog('Monitoring stopped', 'warn', 'monitor');
+        toast('Monitoring stopped', 'info');
+    } else {
+        if (!monitorNodes.length) { toast('Add nodes first', 'warning'); return; }
+        isMonitoring = true;
+        document.getElementById('btnMonitorToggle').innerHTML = '⏹ Stop Monitoring';
+        document.getElementById('btnMonitorToggle').className = 'btn btn-danger btn-sm';
+        addLog('Monitoring started', 'success', 'monitor');
+        toast('Monitoring started', 'success');
+        checkAllNodes();
+        monitorInterval = setInterval(checkAllNodes, monitorIntervalTime);
+    }
+}
+
+async function checkAllNodes(){
+    for(const node of monitorNodes){
+        try{
+            const data = await apiCall('/api/ping', {target: node.ip, count: '3'});
+            if(data.results){
+                const r = data.results, recv = r.filter(x => x.ms !== null), ts = r.length;
+                node.logs = node.logs || [];
+                const nowTime = new Date().toLocaleTimeString();
+
+                if(recv.length > 0){
+                    const avg = recv.reduce((s,x) => s + x.ms, 0) / recv.length;
+                    node.latency.push(avg);
+                    if(node.latency.length > 100) node.latency.shift();
+                    node.loss = (ts - recv.length) / ts * 100;
+                    node.minLatency = node.minLatency === null ? avg : Math.min(node.minLatency, avg);
+                    node.maxLatency = node.maxLatency === null ? avg : Math.max(node.maxLatency, avg);
+
+                    let logMsg = `Ping response: ${avg.toFixed(1)}ms (Loss: ${node.loss.toFixed(0)}%)`;
+                    let logType = 'success';
+
+                    if(node.loss > 50){
+                        node.status = 'down';
+                        logType = 'error';
+                        logMsg = `🚨 Heavy Packet Loss: ${node.loss.toFixed(0)}%! Latency: ${avg.toFixed(1)}ms`;
+                        addLog(`⚠ ${node.name} (${node.ip}): Loss ${node.loss.toFixed(0)}%`, 'error', 'monitor', node.ip);
+                    } else if(node.loss > 0 || avg > 150){
+                        node.status = 'warn';
+                        logType = 'warn';
+                        logMsg = `⚠️ Degraded: Latency ${avg.toFixed(1)}ms, Loss ${node.loss.toFixed(0)}%`;
+                        addLog(`⚠ ${node.name}: avg=${avg.toFixed(1)}ms loss=${node.loss.toFixed(0)}%`, 'warn', 'monitor', node.ip);
+                    } else {
+                        node.status = 'up';
+                    }
+
+                    node.logs.unshift({ time: nowTime, timestamp: Date.now(), latency: avg, loss: node.loss, status: node.status, type: logType, msg: logMsg });
+                } else {
+                    node.status = 'down';
+                    node.loss = 100;
+                    node.logs.unshift({ time: nowTime, timestamp: Date.now(), latency: null, loss: 100, status: 'down', type: 'error', msg: `🔴 Host Unreachable / Request Timeout` });
+                    addLog(`🔴 ${node.name} (${node.ip}): DOWN - No response`, 'error', 'monitor', node.ip);
+                }
+
+                if (node.logs.length > 150) node.logs.pop();
+                node.lastCheck = nowTime;
+            }
+        }catch(e){
+            node.status = 'down';
+            node.loss = 100;
+        }
+    }
+    renderMonitorGrid();
+    updateDashboard();
+    if (currentModalNode) updateModalContent();
+}
+
+// ===== NODE MODAL FUNCTIONS =====
+function openNodeModal(ip) {
+    const node = monitorNodes.find(n => n.ip === ip);
+    if (!node) return;
+    currentModalNode = node;
+    document.getElementById('modalNodeName').textContent = node.name;
+    document.getElementById('modalNodeIP').textContent = node.ip;
+    updateModalContent();
+    document.getElementById('nodeModal').classList.add('open');
+}
+
+function closeNodeModal() {
+    document.getElementById('nodeModal').classList.remove('open');
+    currentModalNode = null;
+}
+
+function updateModalContent() {
+    if (!currentModalNode) return;
+    const n = currentModalNode;
+    const bc = n.status === 'up' ? 'badge-green' : n.status === 'down' ? 'badge-red' : n.status === 'warn' ? 'badge-yellow' : 'badge-blue';
+    const statusEl = document.getElementById('modalNodeStatus');
+    statusEl.className = `badge ${bc}`;
+    statusEl.textContent = `● ${n.status || 'unknown'}`;
+
+    const cur = n.latency.length > 0 ? n.latency[n.latency.length-1].toFixed(1) + 'ms' : '—';
+    const avg = n.latency.length > 0 ? (n.latency.reduce((a,b)=>a+b,0)/n.latency.length).toFixed(1) + 'ms' : '—';
+    const min = n.minLatency !== null ? n.minLatency.toFixed(1) : '—';
+    const max = n.maxLatency !== null ? n.maxLatency.toFixed(1) : '—';
+
+    document.getElementById('modalCurLatency').textContent = cur;
+    document.getElementById('modalAvgLatency').textContent = avg;
+    document.getElementById('modalMinMax').textContent = `${min} / ${max} ms`;
+    const lossEl = document.getElementById('modalPacketLoss');
+    lossEl.textContent = `${n.loss.toFixed(1)}%`;
+    lossEl.style.color = n.loss > 10 ? 'var(--accent-red)' : 'var(--accent-green)';
+
+    drawModalChart(n);
+    renderModalLogs(n);
+}
+
+function drawModalChart(node) {
+    const canvas = document.getElementById('modalChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    const data = node.latency.slice(-50);
+    if (data.length < 2) {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('Collecting latency data...', canvas.width/2, canvas.height/2);
+        return;
+    }
+
+    const pad = { top: 20, right: 15, bottom: 25, left: 50 };
+    const w = canvas.width - pad.left - pad.right;
+    const h = canvas.height - pad.top - pad.bottom;
+    const maxVal = Math.max(...data) * 1.25 || 100;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(42,54,84,0.4)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+        const y = pad.top + (h / 3) * i;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+        ctx.fillStyle = '#64748b'; ctx.font = '10px JetBrains Mono'; ctx.textAlign = 'right';
+        ctx.fillText((maxVal - (maxVal / 3) * i).toFixed(1) + 'ms', pad.left - 6, y + 3);
+    }
+
+    // Fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + h);
+    grad.addColorStop(0, node.status==='down' ? 'rgba(239,68,68,0.25)' : 'rgba(59,130,246,0.25)');
+    grad.addColorStop(1, 'transparent');
+
+    ctx.beginPath(); ctx.moveTo(pad.left, pad.top + h);
+    data.forEach((v, i) => {
+        const x = pad.left + (w / (data.length - 1)) * i;
+        const y = pad.top + h - (v / maxVal) * h;
+        ctx.lineTo(x, y);
+    });
+    ctx.lineTo(pad.left + w, pad.top + h);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    data.forEach((v, i) => {
+        const x = pad.left + (w / (data.length - 1)) * i;
+        const y = pad.top + h - (v / maxVal) * h;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = node.status==='down' ? '#ef4444' : '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Data points
+    data.forEach((v, i) => {
+        const x = pad.left + (w / (data.length - 1)) * i;
+        const y = pad.top + h - (v / maxVal) * h;
+        ctx.fillStyle = node.status==='down' ? '#ef4444' : '#3b82f6';
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+}
+
+function renderModalLogs(node) {
+    const el = document.getElementById('modalLogTerminal');
+    if (!node.logs || node.logs.length === 0) {
+        el.innerHTML = '<div class="term-line term-info">No check events recorded yet. Start monitoring to collect logs.</div>';
+        return;
+    }
+    el.innerHTML = node.logs.map(log => `
+        <div class="term-line">
+            <span class="term-time">[${log.time}]</span>
+            <span class="term-${log.type}">${log.msg}</span>
+        </div>
+    `).join('');
+    el.scrollTop = 0;
+}
+
+function exportCurrentNodeLogs() {
+    if (!currentModalNode || !currentModalNode.logs || currentModalNode.logs.length === 0) {
+        toast('No logs to export', 'warning'); return;
+    }
+    const txt = currentModalNode.logs.map(l => `[${l.time}] [${l.status.toUpperCase()}] ${l.msg}`).join('\n');
+    downloadFile(`node_${currentModalNode.ip.replace(/\./g,'_')}_log.txt`, txt);
+    toast('Node logs exported', 'success');
+}
+
+function clearCurrentNodeLogs() {
+    if (!currentModalNode) return;
+    currentModalNode.logs = [];
+    renderModalLogs(currentModalNode);
+    toast('Node logs cleared', 'info');
+}
+
+function pingCurrentModalNode() {
+    if (!currentModalNode) return;
+    const ip = currentModalNode.ip;
+    closeNodeModal();
+    pingHost(ip);
+}
+
+function traceCurrentModalNode() {
+    if (!currentModalNode) return;
+    const ip = currentModalNode.ip;
+    closeNodeModal();
+    document.getElementById('traceTarget').value = ip;
+    navigateTo('traceroute');
+    startTraceroute();
+}
+
+function portScanCurrentModalNode() {
+    if (!currentModalNode) return;
+    const ip = currentModalNode.ip;
+    closeNodeModal();
+    document.getElementById('portTarget').value = ip;
+    navigateTo('portscan');
+    startPortScan();
+}
+
+function viewNodeLogsFor(ip){
+    openNodeModal(ip);
+}
+
+// ===== SPEED TEST =====
+async function startSpeedTest(){
+    const btn=document.getElementById('btnSpeed');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Testing...';
+    document.getElementById('speedLoading').classList.add('active');addLog('Speed test started','info','speed');
+    try{
+        const data=await apiCall('/api/speedtest');
+        if(data.error){addLog(`Speed test error: ${data.error}`,'error','speed');toast('Failed: '+data.error,'error');}
+        else{const dl=data.download||0,ul=data.upload||0;document.getElementById('speedDl').textContent=dl.toFixed(1);document.getElementById('speedUl').textContent=ul.toFixed(1);
+            const mx=Math.max(dl,ul,100),circ=553;document.getElementById('gaugeDl').style.strokeDashoffset=circ-(dl/mx)*circ;document.getElementById('gaugeUl').style.strokeDashoffset=circ-(ul/mx)*circ;
+            document.getElementById('speedPing').textContent=(data.ping||'—')+' ms';document.getElementById('speedJitter').textContent=(data.jitter||'—')+' ms';
+            document.getElementById('speedServer').textContent=data.server||'—';document.getElementById('speedIP').textContent=data.ip||'—';
+            document.getElementById('speedDetails').style.display='grid';
+            addLog(`Speed: ↓${dl.toFixed(1)} Mbps ↑${ul.toFixed(1)} Mbps ping=${data.ping}ms`,'success','speed');toast(`↓${dl.toFixed(1)} | ↑${ul.toFixed(1)} Mbps`,'success');}
+    }catch(err){addLog(`Speed test error: ${err.message}`,'error','speed');toast('Error','error');}
+    document.getElementById('speedLoading').classList.remove('active');btn.disabled=false;btn.innerHTML='⚡ Run Speed Test';
+}
+
+// ===== WHOIS =====
+let whoisRawData = '';
+async function whoisLookup() {
+    const target=document.getElementById('whoisTarget').value.trim();
+    if(!target){toast('Enter a domain or IP','warning');return;}
+    const btn=document.getElementById('btnWhois');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Looking up...';
+    addLog(`Whois lookup: ${target}`,'info','general',target);
+    try{
+        const data=await apiCall('/api/whois',{target});
+        document.getElementById('whoisResultsCard').style.display='block';
+        if(data.error){document.getElementById('whoisParsed').innerHTML=`<div class="term-line term-error">${data.error}</div>`;addLog(`Whois error: ${data.error}`,'error','general',target);}
+        else{
+            whoisRawData=data.raw||'';
+            let h='<div class="table-container"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>';
+            (data.results||[]).forEach(r=>h+=`<tr><td><span class="badge badge-purple">${r.key}</span></td><td class="mono">${r.value}</td></tr>`);
+            h+='</tbody></table></div>';
+            document.getElementById('whoisParsed').innerHTML=h;
+            document.getElementById('whoisRaw').textContent=whoisRawData;
+            addLog(`Whois: ${data.results.length} field(s) for ${target}`,'success','general',target);
+        }
+    }catch(err){toast('Error','error');}
+    btn.disabled=false;btn.innerHTML='🔎 Lookup';
+}
+function toggleWhoisRaw(){
+    const raw=document.getElementById('whoisRaw'),parsed=document.getElementById('whoisParsed'),btn=document.getElementById('btnWhoisToggle');
+    if(raw.style.display==='none'){raw.style.display='block';parsed.style.display='none';btn.textContent='📊 Show Parsed';}
+    else{raw.style.display='none';parsed.style.display='block';btn.textContent='📄 Show Raw';}
+}
+
+// ===== SUBNET CALCULATOR =====
+async function calcSubnet(){
+    const cidr=document.getElementById('subnetCIDR').value.trim();
+    if(!cidr){toast('Enter CIDR notation','warning');return;}
+    try{
+        const data=await apiCall('/api/subnet',{cidr});
+        document.getElementById('subnetResultsCard').style.display='block';
+        if(data.error){document.getElementById('subnetResults').innerHTML=`<div class="term-line term-error">${data.error}</div>`;}
+        else{
+            const items=[
+                ['Network Address',data.network,'var(--accent-blue)'],
+                ['Broadcast',data.broadcast,'var(--accent-yellow)'],
+                ['Subnet Mask',data.netmask,'var(--text-primary)'],
+                ['Wildcard Mask',data.wildcard,'var(--text-secondary)'],
+                ['CIDR Notation',data.cidr,'var(--accent-cyan)'],
+                ['Prefix Length','/'+data.prefix_len,'var(--accent-purple)'],
+                ['Total Addresses',data.total_hosts.toLocaleString(),'var(--accent-blue)'],
+                ['Usable Hosts',data.usable_hosts.toLocaleString(),'var(--accent-green)'],
+                ['First Usable Host',data.first_host,'var(--accent-cyan)'],
+                ['Last Usable Host',data.last_host,'var(--accent-cyan)'],
+                ['Network Type',data.is_private?'Private (RFC 1918)':'Public','var(--accent-green)'],
+            ];
+            let h='<div class="table-container"><table><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>';
+            items.forEach(([k,v,c])=>h+=`<tr><td style="font-weight:600;">${k}</td><td class="mono" style="color:${c};font-weight:600;font-size:14px;">${v}</td></tr>`);
+            h+='</tbody></table></div>';
+            document.getElementById('subnetResults').innerHTML=h;
+            addLog(`Subnet calc: ${data.cidr} — ${data.usable_hosts} usable hosts`,'success','general');
+        }
+    }catch(err){toast('Error','error');}
+}
+
+// ===== DASHBOARD =====
+function updateDashboard(){
+    document.getElementById('statDevices').textContent=scanResults.length||'—';
+    const on=monitorNodes.filter(n=>n.status==='up').length;document.getElementById('statOnline').textContent=monitorNodes.length>0?`${on}/${monitorNodes.length}`:'—';
+    document.getElementById('statPorts').textContent=scanResults.reduce((s,r)=>s+(r.ports?r.ports.length:0),0)||'—';
+    document.getElementById('statAlerts').textContent=monitorNodes.filter(n=>n.status==='down'||n.status==='warn').length;
+    if(scanResults.length>0){let h='<div class="table-container"><table><thead><tr><th>IP</th><th>Hostname</th><th>Status</th><th>Latency</th></tr></thead><tbody>';
+        scanResults.slice(0,5).forEach(r=>h+=`<tr><td class="mono">${r.ip}</td><td>${r.hostname||'—'}</td><td><span class="badge ${r.status==='up'?'badge-green':'badge-red'}">● ${r.status}</span></td><td class="mono">${r.latency?r.latency+'ms':'—'}</td></tr>`);
+        h+='</tbody></table></div>';document.getElementById('recentDevices').innerHTML=h;}
+}
+
+// ===== UTILITY =====
+function downloadFile(name,content){const b=new Blob([content],{type:'text/plain'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+
+// ===== INIT =====
+async function init(){
+    try{
+        const info = await apiCall('/api/info');
+        document.getElementById('systemInterface').textContent = `${info.interface} (${info.local_ip})`;
+        if (info.gateway) systemGateway = info.gateway;
+        if (info.local_ip) {
+            document.getElementById('scanTarget').value = info.suggested_target || info.network || '';
+            addLog(`System interface: ${info.interface} | IP: ${info.local_ip} | Gateway: ${info.gateway || 'N/A'}`, 'info', 'general');
+        }
+    } catch(e) {
+        document.getElementById('systemInterface').textContent = 'Connected';
+    }
+}
+window.addEventListener('resize',()=>{
+    if(pingChartData.length>0) drawPingChart();
+    monitorNodes.forEach(n=>drawMiniChart(n));
+    if(currentModalNode) drawModalChart(currentModalNode);
+});
+init();
+</script>
+
+<!-- ===== NODE DETAIL & LOG MODAL ===== -->
+<div class="modal-backdrop" id="nodeModal" onclick="if(event.target===this)closeNodeModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div>
+                <h3 id="modalNodeName" style="font-size:18px;font-weight:700;">Node Details</h3>
+                <span id="modalNodeIP" class="mono" style="color:var(--text-muted);font-size:13px;"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span id="modalNodeStatus" class="badge"></span>
+                <button class="modal-close" onclick="closeNodeModal()">✕</button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <!-- Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:16px;">
+                <div class="node-stat"><div class="ns-label">Current RTT</div><div class="ns-value" id="modalCurLatency" style="color:var(--accent-cyan); font-size:20px;">—</div></div>
+                <div class="node-stat"><div class="ns-label">Avg RTT</div><div class="ns-value" id="modalAvgLatency" style="color:var(--accent-blue); font-size:20px;">—</div></div>
+                <div class="node-stat"><div class="ns-label">Min / Max</div><div class="ns-value" id="modalMinMax" style="color:var(--accent-purple); font-size:16px;">—</div></div>
+                <div class="node-stat"><div class="ns-label">Packet Loss</div><div class="ns-value" id="modalPacketLoss" style="font-size:20px;">0%</div></div>
+            </div>
+
+            <!-- Chart -->
+            <div style="margin-bottom:20px;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">📈 Latency Trend (Last 50 checks)</div>
+                <div class="chart-container" style="height:180px;">
+                    <canvas id="modalChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Specific Node Event Logs -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div style="font-size:13px;font-weight:600;color:var(--text-secondary);">📋 Check History & Incident Logs</div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-sm btn-secondary" onclick="exportCurrentNodeLogs()">📥 Export Log</button>
+                    <button class="btn btn-sm btn-danger" onclick="clearCurrentNodeLogs()">🗑 Clear</button>
+                </div>
+            </div>
+            <div class="terminal" id="modalLogTerminal" style="max-height:220px;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary btn-sm" id="modalBtnPing" onclick="pingCurrentModalNode()">📡 Ping Host</button>
+            <button class="btn btn-secondary btn-sm" id="modalBtnTrace" onclick="traceCurrentModalNode()">🗺️ Traceroute</button>
+            <button class="btn btn-secondary btn-sm" id="modalBtnPort" onclick="portScanCurrentModalNode()">🚪 Scan Ports</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeNodeModal()">Close</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
